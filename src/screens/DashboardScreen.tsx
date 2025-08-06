@@ -6,12 +6,14 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
+  Dimensions,
+  Alert,
 } from 'react-native';
-import { Card, Title, Paragraph } from 'react-native-paper';
-import { LineChart, PieChart } from 'react-native-chart-kit';
-import { Dimensions } from 'react-native';
+import { Card, Title, Paragraph, Button, Chip } from 'react-native-paper';
+import { LineChart, PieChart, BarChart } from 'react-native-chart-kit';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'react-native-linear-gradient';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -23,6 +25,9 @@ interface DashboardData {
   recentAssessments: any[];
   woundTypeDistribution: any[];
   upcomingFollowUps: any[];
+  aiInsights: any[];
+  bwatAssessments: number;
+  measureAssessments: number;
 }
 
 export default function DashboardScreen() {
@@ -35,6 +40,9 @@ export default function DashboardScreen() {
     recentAssessments: [],
     woundTypeDistribution: [],
     upcomingFollowUps: [],
+    aiInsights: [],
+    bwatAssessments: 0,
+    measureAssessments: 0,
   });
   const [refreshing, setRefreshing] = useState(false);
 
@@ -47,8 +55,9 @@ export default function DashboardScreen() {
         criticalCases: 3,
         followUpsToday: 8,
         recentAssessments: [
-          { id: 1, patientName: 'John Doe', woundType: 'Pressure Ulcer', date: '2024-01-15' },
-          { id: 2, patientName: 'Jane Smith', woundType: 'Diabetic Ulcer', date: '2024-01-14' },
+          { id: 1, patientName: 'John Doe', woundType: 'Pressure Ulcer', date: '2024-01-15', severity: 'Moderate' },
+          { id: 2, patientName: 'Jane Smith', woundType: 'Diabetic Ulcer', date: '2024-01-14', severity: 'Severe' },
+          { id: 3, patientName: 'Mike Johnson', woundType: 'Surgical Wound', date: '2024-01-13', severity: 'Mild' },
         ],
         woundTypeDistribution: [
           { name: 'Pressure Ulcers', population: 45, color: '#FF6384' },
@@ -57,9 +66,16 @@ export default function DashboardScreen() {
           { name: 'Other', population: 10, color: '#4BC0C0' },
         ],
         upcomingFollowUps: [
-          { id: 1, patientName: 'John Doe', date: '2024-01-16', time: '09:00' },
-          { id: 2, patientName: 'Jane Smith', date: '2024-01-16', time: '14:30' },
+          { id: 1, patientName: 'John Doe', date: '2024-01-16', time: '09:00', priority: 'High' },
+          { id: 2, patientName: 'Jane Smith', date: '2024-01-16', time: '14:30', priority: 'Medium' },
         ],
+        aiInsights: [
+          { id: 1, type: 'warning', message: '3 patients showing signs of infection', icon: 'warning' },
+          { id: 2, type: 'success', message: '5 wounds showing improved healing', icon: 'trending-up' },
+          { id: 3, type: 'info', message: '2 patients due for BWAT reassessment', icon: 'assessment' },
+        ],
+        bwatAssessments: 8,
+        measureAssessments: 5,
       };
       setDashboardData(mockData);
     } catch (error) {
@@ -77,7 +93,7 @@ export default function DashboardScreen() {
     setRefreshing(false);
   };
 
-  const SummaryCard = ({ title, value, icon, color, onPress }: any) => (
+  const SummaryCard = ({ title, value, icon, color, subtitle, onPress }: any) => (
     <TouchableOpacity onPress={onPress}>
       <Card style={[styles.card, { borderLeftColor: color }]}>
         <Card.Content style={styles.cardContent}>
@@ -86,10 +102,38 @@ export default function DashboardScreen() {
             <Text style={styles.cardTitle}>{title}</Text>
           </View>
           <Text style={[styles.cardValue, { color }]}>{value}</Text>
+          {subtitle && <Text style={styles.cardSubtitle}>{subtitle}</Text>}
         </Card.Content>
       </Card>
     </TouchableOpacity>
   );
+
+  const AIInsightCard = ({ insight }: any) => (
+    <Card style={[styles.insightCard, { borderLeftColor: insight.type === 'warning' ? '#f59e0b' : insight.type === 'success' ? '#10b981' : '#3b82f6' }]}>
+      <Card.Content style={styles.insightContent}>
+        <View style={styles.insightHeader}>
+          <Icon 
+            name={insight.icon} 
+            size={20} 
+            color={insight.type === 'warning' ? '#f59e0b' : insight.type === 'success' ? '#10b981' : '#3b82f6'} 
+          />
+          <Text style={styles.insightMessage}>{insight.message}</Text>
+        </View>
+      </Card.Content>
+    </Card>
+  );
+
+  const chartConfig = {
+    backgroundColor: '#ffffff',
+    backgroundGradientFrom: '#ffffff',
+    backgroundGradientTo: '#ffffff',
+    decimalPlaces: 0,
+    color: (opacity = 1) => `rgba(37, 99, 235, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    style: {
+      borderRadius: 16,
+    },
+  };
 
   return (
     <ScrollView
@@ -100,11 +144,11 @@ export default function DashboardScreen() {
     >
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Wound Care Dashboard</Text>
-        <Text style={styles.headerSubtitle}>Welcome back, Doctor</Text>
+        <Text style={styles.headerSubtitle}>AI-Powered Patient Management</Text>
       </View>
 
       {/* Summary Cards */}
-      <View style={styles.summaryGrid}>
+      <View style={styles.summaryContainer}>
         <SummaryCard
           title="Active Assessments"
           value={dashboardData.activeAssessments}
@@ -116,78 +160,137 @@ export default function DashboardScreen() {
           title="Healing Progress"
           value={`${dashboardData.healingProgress}%`}
           icon="trending-up"
-          color="#059669"
+          color="#10b981"
           onPress={() => navigation.navigate('Tracker')}
         />
         <SummaryCard
           title="Critical Cases"
           value={dashboardData.criticalCases}
           icon="warning"
-          color="#dc2626"
-          onPress={() => navigation.navigate('Patients')}
+          color="#f59e0b"
+          onPress={() => Alert.alert('Critical Cases', 'View critical cases')}
         />
         <SummaryCard
-          title="Follow-ups Today"
+          title="Today's Follow-ups"
           value={dashboardData.followUpsToday}
           icon="schedule"
-          color="#7c3aed"
-          onPress={() => navigation.navigate('Patients')}
+          color="#8b5cf6"
+          onPress={() => Alert.alert('Follow-ups', 'View today\'s follow-ups')}
         />
       </View>
 
-      {/* Recent Assessments */}
+      {/* AI Insights */}
       <Card style={styles.sectionCard}>
         <Card.Content>
-          <Title style={styles.sectionTitle}>Recent Assessments</Title>
-          {dashboardData.recentAssessments.map((assessment) => (
-            <View key={assessment.id} style={styles.assessmentItem}>
-              <View style={styles.assessmentInfo}>
-                <Text style={styles.patientName}>{assessment.patientName}</Text>
-                <Text style={styles.woundType}>{assessment.woundType}</Text>
-                <Text style={styles.assessmentDate}>{assessment.date}</Text>
-              </View>
-              <Icon name="chevron-right" size={20} color="#6b7280" />
-            </View>
+          <View style={styles.sectionHeader}>
+            <Icon name="psychology" size={24} color="#2563eb" />
+            <Text style={styles.sectionTitle}>AI Insights</Text>
+          </View>
+          {dashboardData.aiInsights.map((insight) => (
+            <AIInsightCard key={insight.id} insight={insight} />
           ))}
         </Card.Content>
       </Card>
 
-      {/* Wound Type Distribution */}
+      {/* Assessment Tools */}
       <Card style={styles.sectionCard}>
         <Card.Content>
-          <Title style={styles.sectionTitle}>Wound Type Distribution</Title>
-          <View style={styles.chartContainer}>
-            <PieChart
-              data={dashboardData.woundTypeDistribution}
-              width={screenWidth - 80}
-              height={200}
-              chartConfig={{
-                backgroundColor: '#ffffff',
-                backgroundGradientFrom: '#ffffff',
-                backgroundGradientTo: '#ffffff',
-                color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              }}
-              accessor="population"
-              backgroundColor="transparent"
-              paddingLeft="15"
-            />
+          <View style={styles.sectionHeader}>
+            <Icon name="medical-services" size={24} color="#2563eb" />
+            <Text style={styles.sectionTitle}>Assessment Tools</Text>
           </View>
+          <View style={styles.toolsContainer}>
+            <TouchableOpacity 
+              style={styles.toolCard}
+              onPress={() => navigation.navigate('BWATAssessment')}
+            >
+              <LinearGradient colors={['#2563eb', '#1d4ed8']} style={styles.toolGradient}>
+                <Icon name="assessment" size={32} color="white" />
+                <Text style={styles.toolTitle}>BWAT</Text>
+                <Text style={styles.toolSubtitle}>Bates-Jensen Wound Assessment Tool</Text>
+                <Text style={styles.toolCount}>{dashboardData.bwatAssessments} assessments</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.toolCard}
+              onPress={() => navigation.navigate('MeasureAssessment')}
+            >
+              <LinearGradient colors={['#10b981', '#059669']} style={styles.toolGradient}>
+                <Icon name="straighten" size={32} color="white" />
+                <Text style={styles.toolTitle}>MEASURE</Text>
+                <Text style={styles.toolSubtitle}>Measurement & Evaluation Tool</Text>
+                <Text style={styles.toolCount}>{dashboardData.measureAssessments} assessments</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </Card.Content>
+      </Card>
+
+      {/* Recent Assessments */}
+      <Card style={styles.sectionCard}>
+        <Card.Content>
+          <View style={styles.sectionHeader}>
+            <Icon name="history" size={24} color="#2563eb" />
+            <Text style={styles.sectionTitle}>Recent Assessments</Text>
+          </View>
+          {dashboardData.recentAssessments.map((assessment) => (
+            <TouchableOpacity key={assessment.id} style={styles.assessmentItem}>
+              <View style={styles.assessmentInfo}>
+                <Text style={styles.assessmentName}>{assessment.patientName}</Text>
+                <Text style={styles.assessmentType}>{assessment.woundType}</Text>
+                <Text style={styles.assessmentDate}>{assessment.date}</Text>
+              </View>
+              <Chip 
+                mode="outlined" 
+                textStyle={{ color: assessment.severity === 'Severe' ? '#dc2626' : assessment.severity === 'Moderate' ? '#f59e0b' : '#10b981' }}
+              >
+                {assessment.severity}
+              </Chip>
+            </TouchableOpacity>
+          ))}
+        </Card.Content>
+      </Card>
+
+      {/* Wound Type Distribution Chart */}
+      <Card style={styles.sectionCard}>
+        <Card.Content>
+          <View style={styles.sectionHeader}>
+            <Icon name="pie-chart" size={24} color="#2563eb" />
+            <Text style={styles.sectionTitle}>Wound Type Distribution</Text>
+          </View>
+          <PieChart
+            data={dashboardData.woundTypeDistribution}
+            width={screenWidth - 60}
+            height={200}
+            chartConfig={chartConfig}
+            accessor="population"
+            backgroundColor="transparent"
+            paddingLeft="15"
+            absolute
+          />
         </Card.Content>
       </Card>
 
       {/* Upcoming Follow-ups */}
       <Card style={styles.sectionCard}>
         <Card.Content>
-          <Title style={styles.sectionTitle}>Upcoming Follow-ups</Title>
+          <View style={styles.sectionHeader}>
+            <Icon name="schedule" size={24} color="#2563eb" />
+            <Text style={styles.sectionTitle}>Upcoming Follow-ups</Text>
+          </View>
           {dashboardData.upcomingFollowUps.map((followUp) => (
             <View key={followUp.id} style={styles.followUpItem}>
               <View style={styles.followUpInfo}>
-                <Text style={styles.patientName}>{followUp.patientName}</Text>
-                <Text style={styles.followUpDateTime}>
-                  {followUp.date} at {followUp.time}
-                </Text>
+                <Text style={styles.followUpName}>{followUp.patientName}</Text>
+                <Text style={styles.followUpDateTime}>{followUp.date} at {followUp.time}</Text>
               </View>
-              <Icon name="schedule" size={20} color="#059669" />
+              <Chip 
+                mode="outlined" 
+                textStyle={{ color: followUp.priority === 'High' ? '#dc2626' : '#f59e0b' }}
+              >
+                {followUp.priority}
+              </Chip>
             </View>
           ))}
         </Card.Content>
@@ -208,16 +311,16 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e5e7eb',
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#111827',
+    color: '#1f2937',
+    marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 16,
     color: '#6b7280',
-    marginTop: 4,
   },
-  summaryGrid: {
+  summaryContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     padding: 10,
@@ -226,6 +329,7 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
     minWidth: '45%',
+    marginBottom: 10,
     borderLeftWidth: 4,
     elevation: 2,
   },
@@ -238,22 +342,82 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   cardTitle: {
-    fontSize: 12,
-    color: '#6b7280',
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
     marginLeft: 8,
   },
   cardValue: {
     fontSize: 24,
     fontWeight: 'bold',
   },
+  cardSubtitle: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 4,
+  },
   sectionCard: {
     margin: 10,
     elevation: 2,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 16,
+    color: '#1f2937',
+    marginLeft: 8,
+  },
+  insightCard: {
+    marginBottom: 8,
+    borderLeftWidth: 4,
+  },
+  insightContent: {
+    padding: 12,
+  },
+  insightHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  insightMessage: {
+    fontSize: 14,
+    color: '#374151',
+    marginLeft: 8,
+    flex: 1,
+  },
+  toolsContainer: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  toolCard: {
+    flex: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  toolGradient: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  toolTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'white',
+    marginTop: 8,
+  },
+  toolSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  toolCount: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'white',
+    marginTop: 8,
   },
   assessmentItem: {
     flexDirection: 'row',
@@ -266,24 +430,18 @@ const styles = StyleSheet.create({
   assessmentInfo: {
     flex: 1,
   },
-  patientName: {
+  assessmentName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: '#1f2937',
   },
-  woundType: {
+  assessmentType: {
     fontSize: 14,
     color: '#6b7280',
-    marginTop: 2,
   },
   assessmentDate: {
     fontSize: 12,
     color: '#9ca3af',
-    marginTop: 2,
-  },
-  chartContainer: {
-    alignItems: 'center',
-    marginTop: 10,
   },
   followUpItem: {
     flexDirection: 'row',
@@ -296,9 +454,13 @@ const styles = StyleSheet.create({
   followUpInfo: {
     flex: 1,
   },
+  followUpName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
   followUpDateTime: {
     fontSize: 14,
     color: '#6b7280',
-    marginTop: 2,
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Dimensions,
+  Image,
 } from 'react-native';
 import {
   Card,
@@ -13,15 +15,21 @@ import {
   Button,
   Chip,
   ProgressBar,
-  ActivityIndicator,
+  List,
+  Divider,
 } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
+import { LinearGradient } from 'react-native-linear-gradient';
+import { analyzeWoundImage, getTreatmentRecommendations, analyzeHealingProgress } from '../../ai';
+
+const screenWidth = Dimensions.get('window').width;
 
 interface AIWoundAnalysisProps {
-  isDisabled: boolean;
   woundImages?: string[];
   previousAssessments?: any[];
+  bwatScore?: number;
+  measureData?: any;
+  onAnalysisComplete?: (result: AIAnalysisResult) => void;
 }
 
 interface AIAnalysisResult {
@@ -32,303 +40,545 @@ interface AIAnalysisResult {
   recommendations: string[];
   confidence: number;
   bwatScore?: number;
+  measureScore?: number;
   nextSteps: string[];
+  aiInsights: string[];
+  treatmentPlan: string[];
+  riskFactors: string[];
+  healingPrediction: string;
 }
 
-export default function AIWoundAnalysis({ isDisabled, woundImages, previousAssessments }: AIWoundAnalysisProps) {
+export default function AIWoundAnalysis({ 
+  woundImages, 
+  previousAssessments, 
+  bwatScore, 
+  measureData,
+  onAnalysisComplete 
+}: AIWoundAnalysisProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<AIAnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
 
   const performAnalysis = async () => {
     setIsAnalyzing(true);
     setError(null);
-
+    setAnalysisProgress(0);
+    
     try {
-      // Simulate AI analysis
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Step 1: Image Analysis (if available)
+      setAnalysisProgress(20);
+      let imageAnalysis = "";
+      if (woundImages && woundImages.length > 0) {
+        try {
+          const imageResult = await analyzeWoundImage(woundImages[0]);
+          imageAnalysis = imageResult || "";
+        } catch (err) {
+          console.warn("Image analysis failed:", err);
+        }
+      }
 
-      const mockResult: AIAnalysisResult = {
-        woundType: 'Pressure Ulcer',
-        severity: 'Moderate',
-        infectionRisk: 'Low',
-        healingStage: 'Granulation Phase',
-        recommendations: [
-          'Continue current treatment protocol with appropriate dressings',
-          'Monitor for signs of infection and tissue changes',
-          'Ensure proper offloading for pressure relief',
-          'Consider advanced wound care products if no improvement in 2 weeks'
-        ],
-        confidence: 85,
-        bwatScore: 24,
-        nextSteps: [
-          'Continue current treatment protocol',
-          'Monitor for signs of infection',
-          'Schedule follow-up assessment in 1 week',
-          'Consider specialist consultation if no improvement'
-        ]
-      };
+      // Step 2: BWAT Score Analysis
+      setAnalysisProgress(40);
+      let bwatAnalysis = "";
+      if (bwatScore !== undefined) {
+        bwatAnalysis = `BWAT Score: ${bwatScore}. `;
+        if (bwatScore <= 13) {
+          bwatAnalysis += "Minimal severity. ";
+        } else if (bwatScore <= 20) {
+          bwatAnalysis += "Mild severity. ";
+        } else if (bwatScore <= 30) {
+          bwatAnalysis += "Moderate severity. ";
+        } else if (bwatScore <= 40) {
+          bwatAnalysis += "Severe severity. ";
+        } else {
+          bwatAnalysis += "Very severe severity. ";
+        }
+      }
 
-      setAnalysisResult(mockResult);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analysis failed');
+      // Step 3: MEASURE Data Analysis
+      setAnalysisProgress(60);
+      let measureAnalysis = "";
+      if (measureData) {
+        measureAnalysis = `MEASURE Assessment: Wound size ${measureData.woundSize?.area || 0}cm². `;
+        if (measureData.woundBed) {
+          const { granulation, slough, necrotic, epithelial } = measureData.woundBed;
+          measureAnalysis += `Tissue composition: ${granulation}% granulation, ${slough}% slough, ${necrotic}% necrotic, ${epithelial}% epithelial. `;
+        }
+      }
+
+      // Step 4: Healing Progress Analysis
+      setAnalysisProgress(80);
+      let healingAnalysis = "";
+      if (previousAssessments && previousAssessments.length > 1) {
+        try {
+          healingAnalysis = await analyzeHealingProgress(previousAssessments);
+        } catch (err) {
+          console.warn("Healing analysis failed:", err);
+        }
+      }
+
+      // Step 5: Generate Comprehensive Analysis
+      setAnalysisProgress(90);
+      const result: AIAnalysisResult = await generateComprehensiveAnalysis({
+        imageAnalysis,
+        bwatAnalysis,
+        measureAnalysis,
+        healingAnalysis,
+        bwatScore,
+        measureData,
+        previousAssessments,
+      });
+
+      setAnalysisResult(result);
+      setAnalysisProgress(100);
+
+      if (onAnalysisComplete) {
+        onAnalysisComplete(result);
+      }
+
+    } catch (error) {
+      console.error('AI analysis error:', error);
+      setError('Failed to perform AI analysis. Please try again.');
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-  const handleImagePicker = () => {
-    Alert.alert(
-      'Select Image',
-      'Choose image source',
-      [
-        {
-          text: 'Camera',
-          onPress: () => launchCamera({
-            mediaType: 'photo',
-            quality: 0.8,
-          }, (response) => {
-            if (response.assets && response.assets[0]) {
-              setSelectedImages(prev => [...prev, response.assets[0].uri || '']);
-            }
-          }),
-        },
-        {
-          text: 'Gallery',
-          onPress: () => launchImageLibrary({
-            mediaType: 'photo',
-            quality: 0.8,
-          }, (response) => {
-            if (response.assets && response.assets[0]) {
-              setSelectedImages(prev => [...prev, response.assets[0].uri || '']);
-            }
-          }),
-        },
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-      ]
-    );
+  const generateComprehensiveAnalysis = async (data: any): Promise<AIAnalysisResult> => {
+    // This would typically call an AI service
+    // For now, we'll generate a comprehensive analysis based on available data
+    
+    const woundType = data.measureData?.woundType || "Unknown";
+    const severity = data.bwatScore <= 13 ? "Minimal" : 
+                   data.bwatScore <= 20 ? "Mild" : 
+                   data.bwatScore <= 30 ? "Moderate" : 
+                   data.bwatScore <= 40 ? "Severe" : "Very Severe";
+    
+    const infectionRisk = determineInfectionRisk(data);
+    const healingStage = determineHealingStage(data);
+    const recommendations = generateRecommendations(data);
+    const nextSteps = generateNextSteps(data);
+    const aiInsights = generateAIInsights(data);
+    const treatmentPlan = generateTreatmentPlan(data);
+    const riskFactors = identifyRiskFactors(data);
+    const healingPrediction = predictHealing(data);
+
+    return {
+      woundType,
+      severity,
+      infectionRisk,
+      healingStage,
+      recommendations,
+      confidence: calculateConfidence(data),
+      bwatScore: data.bwatScore,
+      measureScore: calculateMeasureScore(data.measureData),
+      nextSteps,
+      aiInsights,
+      treatmentPlan,
+      riskFactors,
+      healingPrediction,
+    };
+  };
+
+  const determineInfectionRisk = (data: any): string => {
+    const riskFactors = [];
+    
+    if (data.measureData?.woundInfection?.signs?.length > 0) {
+      riskFactors.push('Signs of infection present');
+    }
+    
+    if (data.bwatScore > 30) {
+      riskFactors.push('High BWAT score');
+    }
+    
+    if (data.measureData?.woundExudate?.type === 'Purulent') {
+      riskFactors.push('Purulent exudate');
+    }
+    
+    if (riskFactors.length >= 2) return 'High';
+    if (riskFactors.length === 1) return 'Moderate';
+    return 'Low';
+  };
+
+  const determineHealingStage = (data: any): string => {
+    if (data.measureData?.woundBed?.epithelial > 50) return 'Advanced Healing';
+    if (data.measureData?.woundBed?.granulation > 50) return 'Granulation Phase';
+    if (data.measureData?.woundBed?.slough > 25) return 'Debridement Needed';
+    return 'Inflammatory Phase';
+  };
+
+  const generateRecommendations = (data: any): string[] => {
+    const recommendations = [];
+    
+    if (data.bwatScore > 30) {
+      recommendations.push('Consider advanced wound care interventions');
+    }
+    
+    if (data.measureData?.woundBed?.slough > 25) {
+      recommendations.push('Debridement recommended to remove slough');
+    }
+    
+    if (data.measureData?.woundBed?.granulation < 25) {
+      recommendations.push('Focus on promoting granulation tissue formation');
+    }
+    
+    if (data.measureData?.woundInfection?.signs?.length > 0) {
+      recommendations.push('Monitor for infection and consider culture if needed');
+    }
+    
+    return recommendations;
+  };
+
+  const generateNextSteps = (data: any): string[] => {
+    const steps = [];
+    
+    steps.push('Schedule follow-up assessment in 1-2 weeks');
+    
+    if (data.bwatScore > 25) {
+      steps.push('Consider specialist consultation');
+    }
+    
+    if (data.measureData?.woundBed?.slough > 25) {
+      steps.push('Plan for debridement procedure');
+    }
+    
+    return steps;
+  };
+
+  const generateAIInsights = (data: any): string[] => {
+    const insights = [];
+    
+    if (data.bwatScore && data.bwatScore > 30) {
+      insights.push('High severity score indicates need for intensive intervention');
+    }
+    
+    if (data.measureData?.woundSize?.area > 10) {
+      insights.push('Large wound area may require extended healing time');
+    }
+    
+    if (data.measureData?.woundBed?.granulation > 50) {
+      insights.push('Good granulation tissue indicates positive healing trajectory');
+    }
+    
+    return insights;
+  };
+
+  const generateTreatmentPlan = (data: any): string[] => {
+    const plan = [];
+    
+    plan.push('Maintain moist wound environment');
+    plan.push('Protect periwound skin');
+    
+    if (data.measureData?.woundBed?.slough > 25) {
+      plan.push('Implement autolytic or enzymatic debridement');
+    }
+    
+    if (data.measureData?.woundBed?.granulation < 25) {
+      plan.push('Consider growth factor therapy or advanced dressings');
+    }
+    
+    return plan;
+  };
+
+  const identifyRiskFactors = (data: any): string[] => {
+    const risks = [];
+    
+    if (data.measureData?.woundAge > 30) {
+      risks.push('Chronic wound (>30 days)');
+    }
+    
+    if (data.measureData?.woundSize?.area > 10) {
+      risks.push('Large wound area');
+    }
+    
+    if (data.measureData?.woundSurrounding?.edema) {
+      risks.push('Periwound edema');
+    }
+    
+    return risks;
+  };
+
+  const predictHealing = (data: any): string => {
+    if (data.measureData?.woundBed?.granulation > 50 && data.measureData?.woundBed?.epithelial > 25) {
+      return 'Favorable - Expected healing within 4-6 weeks';
+    } else if (data.measureData?.woundBed?.granulation > 25) {
+      return 'Moderate - Expected healing within 6-8 weeks';
+    } else {
+      return 'Challenging - May require extended treatment period';
+    }
+  };
+
+  const calculateConfidence = (data: any): number => {
+    let confidence = 70; // Base confidence
+    
+    if (data.imageAnalysis) confidence += 10;
+    if (data.bwatScore !== undefined) confidence += 10;
+    if (data.measureData) confidence += 10;
+    
+    return Math.min(confidence, 100);
+  };
+
+  const calculateMeasureScore = (measureData: any): number => {
+    if (!measureData) return 0;
+    
+    let score = 0;
+    
+    // Add points based on wound characteristics
+    if (measureData.woundBed?.granulation > 50) score += 20;
+    if (measureData.woundBed?.epithelial > 25) score += 15;
+    if (measureData.woundSize?.area < 5) score += 15;
+    if (!measureData.woundInfection?.signs?.length) score += 20;
+    
+    return score;
   };
 
   const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'Minimal': return '#059669';
-      case 'Mild': return '#d97706';
-      case 'Moderate': return '#ea580c';
-      case 'Severe': return '#dc2626';
-      case 'Very Severe': return '#7c3aed';
+    switch (severity.toLowerCase()) {
+      case 'minimal': return '#10b981';
+      case 'mild': return '#f59e0b';
+      case 'moderate': return '#f97316';
+      case 'severe': return '#dc2626';
+      case 'very severe': return '#7c2d12';
       default: return '#6b7280';
     }
   };
 
   const getRiskColor = (risk: string) => {
-    switch (risk) {
-      case 'Low': return '#059669';
-      case 'Moderate': return '#d97706';
-      case 'High': return '#dc2626';
+    switch (risk.toLowerCase()) {
+      case 'low': return '#10b981';
+      case 'moderate': return '#f59e0b';
+      case 'high': return '#dc2626';
       default: return '#6b7280';
     }
   };
 
   return (
-    <Card style={styles.card}>
-      <Card.Content>
-        <View style={styles.header}>
-          <Title style={styles.title}>
-            <Icon name="psychology" size={20} color="#2563eb" />
-            {' '}AI-Powered Wound Analysis
-          </Title>
-        </View>
-
-        <View style={styles.infoContainer}>
-          <Icon name="info" size={16} color="#6b7280" />
-          <Text style={styles.infoText}>
-            AI analysis combines wound images, BWAT assessment, and clinical data to provide
-            comprehensive wound analysis and treatment recommendations.
+    <ScrollView style={styles.container}>
+      <Card style={styles.card}>
+        <Card.Content>
+          <View style={styles.header}>
+            <Icon name="psychology" size={24} color="#2563eb" />
+            <Title style={styles.title}>AI-Powered Wound Analysis</Title>
+          </View>
+          
+          <Text style={styles.subtitle}>
+            Advanced analysis using machine learning and clinical expertise
           </Text>
-        </View>
+        </Card.Content>
+      </Card>
 
-        <View style={styles.imageSection}>
-          <View style={styles.imageHeader}>
-            <View style={styles.imageInfo}>
-              <Icon name="camera-alt" size={16} color="#6b7280" />
-              <Text style={styles.imageText}>
-                {selectedImages.length} images selected
-              </Text>
-            </View>
+      {!analysisResult && !isAnalyzing && (
+        <Card style={styles.card}>
+          <Card.Content>
             <Button
-              mode="outlined"
-              onPress={handleImagePicker}
-              disabled={isDisabled}
-              icon="camera"
-              style={styles.imageButton}
+              mode="contained"
+              onPress={performAnalysis}
+              icon="brain"
+              style={styles.analyzeButton}
+              disabled={isAnalyzing}
             >
-              Add Image
+              Start AI Analysis
             </Button>
-          </View>
-
-          {selectedImages.length > 0 && (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageList}>
-              {selectedImages.map((image, index) => (
-                <View key={index} style={styles.imageItem}>
-                  <View style={styles.imagePlaceholder}>
-                    <Icon name="image" size={32} color="#9ca3af" />
-                    <Text style={styles.imagePlaceholderText}>Image {index + 1}</Text>
-                  </View>
-                </View>
-              ))}
-            </ScrollView>
-          )}
-        </View>
-
-        <View style={styles.analysisSection}>
-          <Button
-            mode="contained"
-            onPress={performAnalysis}
-            disabled={isDisabled || isAnalyzing}
-            loading={isAnalyzing}
-            icon="psychology"
-            style={styles.analyzeButton}
-          >
-            {isAnalyzing ? 'Analyzing...' : 'Analyze Wound'}
-          </Button>
-        </View>
-
-        {error && (
-          <View style={styles.errorContainer}>
-            <Icon name="error" size={16} color="#dc2626" />
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
-
-        {isAnalyzing && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#2563eb" />
-            <Text style={styles.loadingText}>AI is analyzing your wound data...</Text>
-          </View>
-        )}
-
-        {analysisResult && (
-          <ScrollView style={styles.resultContainer}>
-            {/* Analysis Summary */}
-            <View style={styles.summaryGrid}>
-              <View style={styles.summaryCard}>
-                <View style={styles.summaryHeader}>
-                  <Icon name="description" size={16} color="#2563eb" />
-                  <Text style={styles.summaryLabel}>Wound Type</Text>
-                </View>
-                <Text style={styles.summaryValue}>{analysisResult.woundType}</Text>
-              </View>
-
-              <View style={styles.summaryCard}>
-                <View style={styles.summaryHeader}>
-                  <Icon name="trending-up" size={16} color="#059669" />
-                  <Text style={styles.summaryLabel}>Severity</Text>
-                </View>
-                <Chip
-                  mode="outlined"
-                  textStyle={{ color: getSeverityColor(analysisResult.severity) }}
-                  style={[styles.severityChip, { borderColor: getSeverityColor(analysisResult.severity) }]}
-                >
-                  {analysisResult.severity}
-                </Chip>
-              </View>
-
-              <View style={styles.summaryCard}>
-                <View style={styles.summaryHeader}>
-                  <Icon name="warning" size={16} color="#dc2626" />
-                  <Text style={styles.summaryLabel}>Infection Risk</Text>
-                </View>
-                <Chip
-                  mode="outlined"
-                  textStyle={{ color: getRiskColor(analysisResult.infectionRisk) }}
-                  style={[styles.severityChip, { borderColor: getRiskColor(analysisResult.infectionRisk) }]}
-                >
-                  {analysisResult.infectionRisk}
-                </Chip>
-              </View>
-
-              <View style={styles.summaryCard}>
-                <View style={styles.summaryHeader}>
-                  <Icon name="healing" size={16} color="#7c3aed" />
-                  <Text style={styles.summaryLabel}>Healing Stage</Text>
-                </View>
-                <Text style={styles.summaryValue}>{analysisResult.healingStage}</Text>
-              </View>
+            
+            <View style={styles.analysisInfo}>
+              <Text style={styles.infoTitle}>What AI Analysis Includes:</Text>
+              <List.Item
+                title="Image Analysis"
+                description="Computer vision analysis of wound photos"
+                left={(props) => <List.Icon {...props} icon="camera" />}
+              />
+              <List.Item
+                title="BWAT Integration"
+                description="Bates-Jensen Wound Assessment Tool scoring"
+                left={(props) => <List.Icon {...props} icon="assessment" />}
+              />
+              <List.Item
+                title="MEASURE Analysis"
+                description="Measurement and evaluation tool integration"
+                left={(props) => <List.Icon {...props} icon="straighten" />}
+              />
+              <List.Item
+                title="Healing Progress"
+                description="Trend analysis and prediction"
+                left={(props) => <List.Icon {...props} icon="trending-up" />}
+              />
             </View>
+          </Card.Content>
+        </Card>
+      )}
 
-            {/* BWAT Integration */}
-            {analysisResult.bwatScore !== undefined && (
-              <View style={styles.bwatContainer}>
-                <Title style={styles.bwatTitle}>BWAT Assessment Integration</Title>
-                <View style={styles.bwatContent}>
-                  <View style={styles.bwatScore}>
-                    <Text style={styles.bwatScoreLabel}>Total Score:</Text>
-                    <Text style={styles.bwatScoreValue}>{analysisResult.bwatScore}/65</Text>
-                  </View>
-                  <ProgressBar
-                    progress={analysisResult.bwatScore / 65}
-                    color="#2563eb"
-                    style={styles.bwatProgress}
-                  />
-                  <Chip
-                    mode="outlined"
+      {isAnalyzing && (
+        <Card style={styles.card}>
+          <Card.Content>
+            <View style={styles.analyzingContainer}>
+              <Icon name="psychology" size={48} color="#2563eb" />
+              <Title style={styles.analyzingTitle}>AI Analysis in Progress</Title>
+              <Text style={styles.analyzingSubtitle}>
+                Analyzing wound data and generating insights...
+              </Text>
+              
+              <ProgressBar
+                progress={analysisProgress / 100}
+                color="#2563eb"
+                style={styles.progressBar}
+              />
+              <Text style={styles.progressText}>{analysisProgress}% Complete</Text>
+            </View>
+          </Card.Content>
+        </Card>
+      )}
+
+      {error && (
+        <Card style={styles.card}>
+          <Card.Content>
+            <View style={styles.errorContainer}>
+              <Icon name="error" size={24} color="#dc2626" />
+              <Text style={styles.errorText}>{error}</Text>
+              <Button
+                mode="outlined"
+                onPress={performAnalysis}
+                style={styles.retryButton}
+              >
+                Retry Analysis
+              </Button>
+            </View>
+          </Card.Content>
+        </Card>
+      )}
+
+      {analysisResult && (
+        <>
+          {/* Summary Card */}
+          <Card style={styles.card}>
+            <Card.Content>
+              <Title style={styles.sectionTitle}>Analysis Summary</Title>
+              <View style={styles.summaryGrid}>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Wound Type</Text>
+                  <Chip mode="outlined" style={styles.summaryChip}>
+                    {analysisResult.woundType}
+                  </Chip>
+                </View>
+                
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Severity</Text>
+                  <Chip 
+                    mode="outlined" 
+                    style={[styles.summaryChip, { borderColor: getSeverityColor(analysisResult.severity) }]}
                     textStyle={{ color: getSeverityColor(analysisResult.severity) }}
-                    style={[styles.severityChip, { borderColor: getSeverityColor(analysisResult.severity) }]}
                   >
                     {analysisResult.severity}
                   </Chip>
                 </View>
+                
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Infection Risk</Text>
+                  <Chip 
+                    mode="outlined" 
+                    style={[styles.summaryChip, { borderColor: getRiskColor(analysisResult.infectionRisk) }]}
+                    textStyle={{ color: getRiskColor(analysisResult.infectionRisk) }}
+                  >
+                    {analysisResult.infectionRisk}
+                  </Chip>
+                </View>
+                
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>Healing Stage</Text>
+                  <Chip mode="outlined" style={styles.summaryChip}>
+                    {analysisResult.healingStage}
+                  </Chip>
+                </View>
               </View>
-            )}
+            </Card.Content>
+          </Card>
 
-            {/* Treatment Recommendations */}
-            {analysisResult.recommendations.length > 0 && (
-              <View style={styles.recommendationsContainer}>
-                <Title style={styles.recommendationsTitle}>AI Treatment Recommendations</Title>
-                {analysisResult.recommendations.map((rec, index) => (
-                  <View key={index} style={styles.recommendationItem}>
-                    <Icon name="check-circle" size={16} color="#059669" />
-                    <Text style={styles.recommendationText}>{rec}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Next Steps */}
-            <View style={styles.nextStepsContainer}>
-              <Title style={styles.nextStepsTitle}>Recommended Next Steps</Title>
-              {analysisResult.nextSteps.map((step, index) => (
-                <View key={index} style={styles.nextStepItem}>
-                  <View style={styles.stepBullet} />
-                  <Text style={styles.nextStepText}>{step}</Text>
+          {/* AI Insights */}
+          <Card style={styles.card}>
+            <Card.Content>
+              <Title style={styles.sectionTitle}>AI Insights</Title>
+              {analysisResult.aiInsights.map((insight, index) => (
+                <View key={index} style={styles.insightItem}>
+                  <Icon name="lightbulb" size={16} color="#f59e0b" />
+                  <Text style={styles.insightText}>{insight}</Text>
                 </View>
               ))}
-            </View>
+            </Card.Content>
+          </Card>
 
-            {/* Confidence Score */}
-            <View style={styles.confidenceContainer}>
-              <View style={styles.confidenceHeader}>
-                <Text style={styles.confidenceLabel}>Analysis Confidence</Text>
-                <Text style={styles.confidenceValue}>{analysisResult.confidence}%</Text>
+          {/* Recommendations */}
+          <Card style={styles.card}>
+            <Card.Content>
+              <Title style={styles.sectionTitle}>Treatment Recommendations</Title>
+              {analysisResult.recommendations.map((recommendation, index) => (
+                <View key={index} style={styles.recommendationItem}>
+                  <Icon name="check-circle" size={16} color="#10b981" />
+                  <Text style={styles.recommendationText}>{recommendation}</Text>
+                </View>
+              ))}
+            </Card.Content>
+          </Card>
+
+          {/* Treatment Plan */}
+          <Card style={styles.card}>
+            <Card.Content>
+              <Title style={styles.sectionTitle}>Treatment Plan</Title>
+              {analysisResult.treatmentPlan.map((plan, index) => (
+                <View key={index} style={styles.planItem}>
+                  <Icon name="medical-services" size={16} color="#2563eb" />
+                  <Text style={styles.planText}>{plan}</Text>
+                </View>
+              ))}
+            </Card.Content>
+          </Card>
+
+          {/* Risk Factors */}
+          <Card style={styles.card}>
+            <Card.Content>
+              <Title style={styles.sectionTitle}>Risk Factors</Title>
+              {analysisResult.riskFactors.map((risk, index) => (
+                <View key={index} style={styles.riskItem}>
+                  <Icon name="warning" size={16} color="#f59e0b" />
+                  <Text style={styles.riskText}>{risk}</Text>
+                </View>
+              ))}
+            </Card.Content>
+          </Card>
+
+          {/* Healing Prediction */}
+          <Card style={styles.card}>
+            <Card.Content>
+              <Title style={styles.sectionTitle}>Healing Prediction</Title>
+              <View style={styles.predictionContainer}>
+                <Icon name="timeline" size={24} color="#2563eb" />
+                <Text style={styles.predictionText}>{analysisResult.healingPrediction}</Text>
               </View>
-              <ProgressBar
-                progress={analysisResult.confidence / 100}
-                color="#2563eb"
-                style={styles.confidenceProgress}
-              />
-            </View>
-          </ScrollView>
-        )}
-      </Card.Content>
-    </Card>
+            </Card.Content>
+          </Card>
+
+          {/* Next Steps */}
+          <Card style={styles.card}>
+            <Card.Content>
+              <Title style={styles.sectionTitle}>Next Steps</Title>
+              {analysisResult.nextSteps.map((step, index) => (
+                <View key={index} style={styles.stepItem}>
+                  <Text style={styles.stepNumber}>{index + 1}</Text>
+                  <Text style={styles.stepText}>{step}</Text>
+                </View>
+              ))}
+            </Card.Content>
+          </Card>
+        </>
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f3f4f6',
+  },
   card: {
     margin: 16,
     elevation: 2,
@@ -336,236 +586,170 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#111827',
-  },
-  infoContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#f3f4f6',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 12,
-    color: '#6b7280',
+    color: '#1f2937',
     marginLeft: 8,
   },
-  imageSection: {
-    marginBottom: 16,
-  },
-  imageHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  imageInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  imageText: {
+  subtitle: {
     fontSize: 14,
     color: '#6b7280',
-    marginLeft: 8,
-  },
-  imageButton: {
-    borderColor: '#2563eb',
-  },
-  imageList: {
-    flexDirection: 'row',
-  },
-  imageItem: {
-    marginRight: 12,
-  },
-  imagePlaceholder: {
-    width: 80,
-    height: 80,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-  },
-  imagePlaceholderText: {
-    fontSize: 10,
-    color: '#9ca3af',
     marginTop: 4,
   },
-  analysisSection: {
-    marginBottom: 16,
-  },
   analyzeButton: {
-    backgroundColor: '#2563eb',
+    marginVertical: 16,
   },
-  errorContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#fef2f2',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-    alignItems: 'center',
+  analysisInfo: {
+    marginTop: 16,
   },
-  errorText: {
-    flex: 1,
-    fontSize: 12,
-    color: '#dc2626',
-    marginLeft: 8,
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
   },
-  loadingContainer: {
+  analyzingContainer: {
     alignItems: 'center',
     padding: 20,
   },
-  loadingText: {
-    marginTop: 12,
+  analyzingTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginTop: 16,
+  },
+  analyzingSubtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  progressBar: {
+    marginTop: 20,
+    height: 8,
+    borderRadius: 4,
+  },
+  progressText: {
+    marginTop: 8,
     fontSize: 14,
     color: '#6b7280',
   },
-  resultContainer: {
-    maxHeight: 600,
+  errorContainer: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#dc2626',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 16,
   },
   summaryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 16,
+    gap: 12,
   },
-  summaryCard: {
-    width: '48%',
-    backgroundColor: '#f9fafb',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  summaryHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
+  summaryItem: {
+    flex: 1,
+    minWidth: '45%',
   },
   summaryLabel: {
     fontSize: 12,
     color: '#6b7280',
-    marginLeft: 4,
+    marginBottom: 4,
   },
-  summaryValue: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#111827',
+  summaryChip: {
+    alignSelf: 'flex-start',
   },
-  severityChip: {
-    height: 24,
-  },
-  bwatContainer: {
-    backgroundColor: '#eff6ff',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  bwatTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 12,
-    color: '#1e40af',
-  },
-  bwatContent: {
+  insightItem: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  bwatScore: {
-    marginRight: 12,
-  },
-  bwatScoreLabel: {
-    fontSize: 12,
-    color: '#1e40af',
-  },
-  bwatScoreValue: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1e40af',
-  },
-  bwatProgress: {
-    flex: 1,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 12,
-  },
-  recommendationsContainer: {
-    marginBottom: 16,
-  },
-  recommendationsTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
     marginBottom: 12,
+  },
+  insightText: {
+    fontSize: 14,
+    color: '#374151',
+    marginLeft: 8,
+    flex: 1,
   },
   recommendationItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: '#f0fdf4',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  recommendationText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#166534',
-    marginLeft: 8,
-  },
-  nextStepsContainer: {
-    marginBottom: 16,
-  },
-  nextStepsTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  nextStepItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  stepBullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#2563eb',
-    marginTop: 6,
-    marginRight: 12,
-  },
-  nextStepText: {
-    flex: 1,
+  recommendationText: {
     fontSize: 14,
     color: '#374151',
+    marginLeft: 8,
+    flex: 1,
   },
-  confidenceContainer: {
-    backgroundColor: '#f9fafb',
+  planItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  planText: {
+    fontSize: 14,
+    color: '#374151',
+    marginLeft: 8,
+    flex: 1,
+  },
+  riskItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  riskText: {
+    fontSize: 14,
+    color: '#374151',
+    marginLeft: 8,
+    flex: 1,
+  },
+  predictionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
+    backgroundColor: '#f3f4f6',
     borderRadius: 8,
   },
-  confidenceHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  confidenceLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+  predictionText: {
+    fontSize: 16,
     color: '#374151',
+    marginLeft: 12,
+    flex: 1,
   },
-  confidenceValue: {
-    fontSize: 14,
+  stepItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  stepNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#2563eb',
+    color: 'white',
+    textAlign: 'center',
+    lineHeight: 24,
+    fontSize: 12,
     fontWeight: 'bold',
-    color: '#111827',
   },
-  confidenceProgress: {
-    height: 8,
-    borderRadius: 4,
+  stepText: {
+    fontSize: 14,
+    color: '#374151',
+    marginLeft: 12,
+    flex: 1,
   },
 });
