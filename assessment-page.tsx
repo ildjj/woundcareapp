@@ -19,6 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Save, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { TreatmentRecommendations } from "@/components/ai/treatment-recommendations";
+import BWATAssessment from "@/components/assessment/bwat-assessment";
+import AIWoundAnalysis from "@/components/assessment/ai-wound-analysis";
 
 export default function AssessmentPage() {
   const [, setLocation] = useLocation();
@@ -189,6 +191,10 @@ export default function AssessmentPage() {
               <WoundImages isDisabled={!selectedPatient} />
               
               <Treatment isDisabled={!selectedPatient} />
+              
+              <BWATAssessment isDisabled={!selectedPatient} />
+              
+              <AIWoundAnalysis isDisabled={!selectedPatient} />
               
               <TreatmentRecommendations />
               
