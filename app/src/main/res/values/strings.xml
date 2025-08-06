@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Wound Care Assessment</string>
+    
+    <!-- Navigation -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_patients">Patients</string>
+    <string name="nav_assessment">Assessment</string>
+    <string name="nav_camera">Camera</string>
+    <string name="nav_reports">Reports</string>
+    <string name="nav_settings">Settings</string>
+    
+    <!-- Dashboard -->
+    <string name="dashboard_title">Wound Care Dashboard</string>
+    <string name="quick_actions">Quick Actions</string>
+    <string name="new_patient">New Patient</string>
+    <string name="take_photo">Take Photo</string>
+    <string name="new_assessment">New Assessment</string>
+    <string name="view_reports">View Reports</string>
+    <string name="overview">Overview</string>
+    <string name="total_patients">Total Patients</string>
+    <string name="active_wounds">Active Wounds</string>
+    <string name="assessments_this_week">This Week</string>
+    <string name="healing_rate">Healing Rate</string>
+    <string name="avg_healing_time">Avg Healing (weeks)</string>
+    <string name="photos_this_month">Photos This Month</string>
+    <string name="urgent_attention">Requires Urgent Attention</string>
+    <string name="recent_assessments">Recent Assessments</string>
+    <string name="due_for_assessment">Due for Assessment</string>
+    <string name="healing_progress">Healing Progress Overview</string>
+    <string name="healing">Healing</string>
+    <string name="stalled">Stalled</string>
+    <string name="deteriorating">Deteriorating</string>
+    
+    <!-- BWAT Assessment -->
+    <string name="bwat_title">BWAT Assessment</string>
+    <string name="bwat_size">Size</string>
+    <string name="bwat_depth">Depth</string>
+    <string name="bwat_edges">Edges</string>
+    <string name="bwat_undermining">Undermining</string>
+    <string name="bwat_necrotic_tissue_type">Necrotic Tissue Type</string>
+    <string name="bwat_necrotic_tissue_amount">Necrotic Tissue Amount</string>
+    <string name="bwat_exudate_type">Exudate Type</string>
+    <string name="bwat_exudate_amount">Exudate Amount</string>
+    <string name="bwat_skin_color">Skin Color</string>
+    <string name="bwat_peripheral_edema">Peripheral Edema</string>
+    <string name="bwat_peripheral_induration">Peripheral Induration</string>
+    <string name="bwat_granulation_tissue">Granulation Tissue</string>
+    <string name="bwat_epithelialization">Epithelialization</string>
+    <string name="bwat_total_score">Total Score</string>
+    
+    <!-- Wound Types -->
+    <string name="wound_type_pressure">Pressure Ulcer</string>
+    <string name="wound_type_diabetic">Diabetic Ulcer</string>
+    <string name="wound_type_venous">Venous Ulcer</string>
+    <string name="wound_type_arterial">Arterial Ulcer</string>
+    <string name="wound_type_surgical">Surgical Wound</string>
+    <string name="wound_type_traumatic">Traumatic Wound</string>
+    
+    <!-- Healing Status -->
+    <string name="healing_regenerating">Regenerating</string>
+    <string name="healing_stalled">Stalled</string>
+    <string name="healing_degenerating">Degenerating</string>
+    <string name="healing_baseline">Baseline</string>
+    
+    <!-- Measurements -->
+    <string name="measurement_length">Length (cm)</string>
+    <string name="measurement_width">Width (cm)</string>
+    <string name="measurement_depth">Depth (cm)</string>
+    <string name="measurement_area">Area (cm²)</string>
+    <string name="measurement_volume">Volume (cm³)</string>
+    <string name="measurement_perimeter">Perimeter (cm)</string>
+    
+    <!-- Camera -->
+    <string name="camera_title">Photo Documentation</string>
+    <string name="camera_capture">Capture</string>
+    <string name="camera_retake">Retake</string>
+    <string name="camera_save">Save</string>
+    <string name="camera_cancel">Cancel</string>
+    <string name="photo_type_overview">Overview</string>
+    <string name="photo_type_closeup">Close-up</string>
+    <string name="photo_type_measurement">Measurement</string>
+    <string name="photo_type_before_treatment">Before Treatment</string>
+    <string name="photo_type_after_treatment">After Treatment</string>
+    
+    <!-- AI Analysis -->
+    <string name="ai_analysis">AI Analysis</string>
+    <string name="ai_confidence">Confidence</string>
+    <string name="ai_wound_type">Predicted Wound Type</string>
+    <string name="ai_tissue_granulation">Granulation</string>
+    <string name="ai_tissue_slough">Slough</string>
+    <string name="ai_tissue_eschar">Eschar</string>
+    <string name="ai_tissue_epithelialization">Epithelialization</string>
+    <string name="ai_recommendations">AI Recommendations</string>
+    <string name="ai_healing_prediction">Healing Prediction</string>
+    
+    <!-- Patient Information -->
+    <string name="patient_name">Patient Name</string>
+    <string name="patient_id">Patient ID</string>
+    <string name="patient_mrn">Medical Record Number</string>
+    <string name="patient_dob">Date of Birth</string>
+    <string name="patient_gender">Gender</string>
+    <string name="patient_contact">Contact Information</string>
+    
+    <!-- Common Actions -->
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_view">View</string>
+    <string name="action_export">Export</string>
+    <string name="action_share">Share</string>
+    <string name="action_back">Back</string>
+    <string name="action_next">Next</string>
+    <string name="action_finish">Finish</string>
+    
+    <!-- Alerts and Messages -->
+    <string name="alert_urgent_wound">This wound requires urgent attention</string>
+    <string name="alert_infection_signs">Signs of infection detected</string>
+    <string name="alert_assessment_due">Assessment due</string>
+    <string name="alert_consent_required">Patient consent required</string>
+    <string name="message_no_patients">No patients found</string>
+    <string name="message_no_wounds">No wounds recorded</string>
+    <string name="message_no_assessments">No assessments available</string>
+    <string name="message_loading">Loading...</string>
+    <string name="message_saving">Saving...</string>
+    <string name="message_error">An error occurred</string>
+    
+    <!-- HIPAA and Compliance -->
+    <string name="hipaa_notice">HIPAA Privacy Notice</string>
+    <string name="consent_photography">Photography Consent</string>
+    <string name="consent_data_sharing">Data Sharing Consent</string>
+    <string name="privacy_settings">Privacy Settings</string>
+    <string name="data_encryption">Data Encryption Enabled</string>
+    
+    <!-- Settings -->
+    <string name="settings_profile">User Profile</string>
+    <string name="settings_security">Security</string>
+    <string name="settings_privacy">Privacy</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_backup">Backup &amp; Sync</string>
+    <string name="settings_about">About</string>
+    
+    <!-- Reports -->
+    <string name="reports_title">Reports &amp; Analytics</string>
+    <string name="reports_patient_outcomes">Patient Outcomes</string>
+    <string name="reports_healing_trends">Healing Trends</string>
+    <string name="reports_bwat_analysis">BWAT Score Analysis</string>
+    <string name="reports_photo_comparison">Photo Comparison</string>
+    <string name="reports_export">Export Report</string>
+</resources>
