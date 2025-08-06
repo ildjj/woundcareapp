@@ -1,0 +1,2 @@
+rootProject.name = 'WoundCareTracker'
+include ':app'
