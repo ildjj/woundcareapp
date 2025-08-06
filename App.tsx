@@ -10,6 +10,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import DashboardScreen from './src/screens/DashboardScreen';
 import AssessmentScreen from './src/screens/AssessmentScreen';
 import BWATAssessmentScreen from './src/screens/BWATAssessmentScreen';
+import MeasureAssessmentScreen from './src/screens/MeasureAssessmentScreen';
 import PatientScreen from './src/screens/PatientScreen';
 import HealingTrackerScreen from './src/screens/HealingTrackerScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
@@ -74,6 +75,7 @@ function App() {
                   <Stack.Screen name="Auth" component={AuthScreen} />
                   <Stack.Screen name="Main" component={TabNavigator} />
                   <Stack.Screen name="BWATAssessment" component={BWATAssessmentScreen} />
+                  <Stack.Screen name="MeasureAssessment" component={MeasureAssessmentScreen} />
                 </Stack.Navigator>
               </NavigationContainer>
             </AssessmentProvider>

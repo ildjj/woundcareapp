@@ -1,29 +1,59 @@
-# Wound Care Pro
+# AI-Powered Wound Care Android App
 
-An AI-powered wound assessment and management application built with React Native, featuring the Bates-Jensen Wound Assessment Tool (BWAT) and advanced AI analysis capabilities.
+A comprehensive Android application for wound care management with AI-powered analysis, patient tracking, and assessment tools including BWAT and MEASURE protocols.
 
-## Features
+## 🏥 Features
 
-- **Dashboard**: Overview of active assessments, healing progress, and critical cases
-- **BWAT Assessment**: Complete Bates-Jensen Wound Assessment Tool implementation
-- **AI Analysis**: AI-powered wound image analysis and treatment recommendations
-- **Patient Management**: Comprehensive patient tracking and history
-- **Healing Tracker**: Progress monitoring with charts and analytics
-- **Settings**: App configuration and data management
+### Core Functionality
+- **AI-Powered Wound Analysis**: Advanced machine learning analysis of wound images and assessment data
+- **Patient Management**: Complete patient tracking and history management
+- **Assessment Tools**: Integrated BWAT (Bates-Jensen Wound Assessment Tool) and MEASURE protocols
+- **Photo Documentation**: High-quality wound photography with AI analysis
+- **Progress Tracking**: Comprehensive healing progress monitoring and visualization
+- **Dashboard**: Real-time insights and analytics
 
-## Prerequisites
+### Assessment Tools
 
+#### BWAT (Bates-Jensen Wound Assessment Tool)
+- 13 standardized assessment criteria
+- Automated scoring and severity classification
+- Progress tracking over time
+- Evidence-based recommendations
+
+#### MEASURE Tool
+- Comprehensive wound measurement and evaluation
+- Tissue composition analysis
+- Infection risk assessment
+- Treatment planning integration
+
+### AI Capabilities
+- **Image Analysis**: Computer vision analysis of wound photos
+- **Risk Assessment**: Automated infection risk evaluation
+- **Healing Prediction**: AI-powered healing timeline predictions
+- **Treatment Recommendations**: Evidence-based treatment suggestions
+- **Progress Analysis**: Trend analysis and pattern recognition
+
+### Photo Documentation
+- High-resolution wound photography
+- Multiple angle capture
+- AI-powered image analysis
+- Secure storage and organization
+- Progress comparison tools
+
+## 🚀 Getting Started
+
+### Prerequisites
 - Node.js (v16 or higher)
 - React Native CLI
-- Android Studio (for Android development)
+- Android Studio
 - Android SDK
 - Java Development Kit (JDK)
 
-## Installation
+### Installation
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/your-username/wound-care-app.git
    cd wound-care-app
    ```
 
@@ -32,180 +62,234 @@ An AI-powered wound assessment and management application built with React Nativ
    npm install
    ```
 
-3. **Install React Native CLI globally**
-   ```bash
-   npm install -g @react-native-community/cli
-   ```
-
-4. **Install Android dependencies**
-   ```bash
-   npx react-native doctor
-   ```
-
-## Running the App
-
-### Development Mode
-
-1. **Start Metro bundler**
-   ```bash
-   npx react-native start
-   ```
-
-2. **Run on Android**
-   ```bash
-   npx react-native run-android
-   ```
-
-### Building APK
-
-#### Debug APK
-```bash
-cd android
-./gradlew assembleDebug
-```
-The APK will be generated at: `android/app/build/outputs/apk/debug/app-debug.apk`
-
-#### Release APK
-```bash
-cd android
-./gradlew assembleRelease
-```
-The APK will be generated at: `android/app/build/outputs/apk/release/app-release.apk`
-
-#### Bundle for Play Store
-```bash
-cd android
-./gradlew bundleRelease
-```
-The AAB will be generated at: `android/app/build/outputs/bundle/release/app-release.aab`
-
-## Project Structure
-
-```
-wound-care-app/
-├── src/
-│   ├── components/          # Reusable UI components
-│   │   ├── BWATAssessment.tsx
-│   │   └── AIWoundAnalysis.tsx
-│   ├── contexts/           # React Context providers
-│   │   ├── AuthContext.tsx
-│   │   ├── AssessmentContext.tsx
-│   │   └── DatabaseContext.tsx
-│   └── screens/            # App screens
-│       ├── DashboardScreen.tsx
-│       ├── AssessmentScreen.tsx
-│       ├── PatientScreen.tsx
-│       ├── HealingTrackerScreen.tsx
-│       ├── SettingsScreen.tsx
-│       ├── AuthScreen.tsx
-│       └── BWATAssessmentScreen.tsx
-├── android/                # Android-specific files
-├── App.tsx                 # Main app component
-├── index.js               # Entry point
-└── package.json           # Dependencies and scripts
-```
-
-## Key Technologies
-
-- **React Native**: Cross-platform mobile development
-- **React Navigation**: Navigation between screens
-- **React Native Paper**: Material Design components
-- **React Native Vector Icons**: Icon library
-- **React Native Chart Kit**: Charts and graphs
-- **React Native Image Picker**: Camera and gallery access
-- **AsyncStorage**: Local data persistence
-
-## BWAT Assessment Tool
-
-The Bates-Jensen Wound Assessment Tool (BWAT) is a comprehensive wound assessment instrument that evaluates 13 wound characteristics:
-
-1. **Size**: Wound size in cm²
-2. **Depth**: Wound depth assessment
-3. **Edges**: Wound edge characteristics
-4. **Undermining**: Tissue undermining assessment
-5. **Necrotic Tissue Type**: Type of necrotic tissue
-6. **Necrotic Tissue Amount**: Percentage of necrotic tissue
-7. **Exudate Type**: Type of wound exudate
-8. **Exudate Amount**: Amount of exudate
-9. **Skin Color**: Surrounding skin color
-10. **Peripheral Edema**: Tissue edema assessment
-11. **Peripheral Induration**: Tissue induration
-12. **Granulation Tissue**: Granulation tissue assessment
-13. **Epithelialization**: Epithelialization coverage
-
-## AI Integration
-
-The app includes AI-powered features for:
-- Wound image analysis
-- Treatment recommendations
-- Healing progress analysis
-- Risk assessment
-
-## Permissions
-
-The app requires the following permissions:
-- **Camera**: For capturing wound images
-- **Storage**: For saving and accessing images
-- **Internet**: For AI analysis and data sync
-- **Location**: For patient location tracking (optional)
-
-## Development Notes
-
-### Adding New Features
-1. Create new components in `src/components/`
-2. Add new screens in `src/screens/`
-3. Update navigation in `App.tsx`
-4. Add any new dependencies to `package.json`
-
-### Styling
-- Use React Native Paper components for consistency
-- Follow Material Design guidelines
-- Use the provided color scheme and typography
-
-### State Management
-- Use React Context for global state
-- Local state for component-specific data
-- AsyncStorage for persistent data
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Metro bundler issues**
-   ```bash
-   npx react-native start --reset-cache
-   ```
-
-2. **Android build issues**
+3. **Android setup**
    ```bash
    cd android
    ./gradlew clean
    cd ..
+   ```
+
+4. **Run the application**
+   ```bash
+   # Start Metro bundler
+   npx react-native start
+   
+   # Run on Android device/emulator
    npx react-native run-android
    ```
 
-3. **Permission issues**
-   - Ensure all required permissions are in `AndroidManifest.xml`
-   - Request permissions at runtime for Android 6.0+
+### Environment Configuration
 
-4. **Dependency issues**
+1. **Create environment file**
    ```bash
-   rm -rf node_modules
-   npm install
+   cp .env.example .env
    ```
 
-## Contributing
+2. **Configure API keys**
+   ```env
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+
+## 📱 App Structure
+
+### Screens
+- **DashboardScreen**: Main dashboard with overview and insights
+- **AssessmentScreen**: General assessment interface
+- **BWATAssessmentScreen**: BWAT tool implementation
+- **MeasureAssessmentScreen**: MEASURE tool implementation
+- **PatientScreen**: Patient management and details
+- **HealingTrackerScreen**: Progress tracking and visualization
+- **SettingsScreen**: App configuration and preferences
+
+### Components
+- **AIWoundAnalysis**: AI-powered analysis component
+- **PhotoDocumentation**: Photo capture and management
+- **BWATAssessment**: BWAT assessment form
+- **MeasureAssessment**: MEASURE assessment form
+
+### Key Features
+
+#### Dashboard
+- Real-time patient overview
+- AI insights and recommendations
+- Assessment tool quick access
+- Progress tracking visualization
+- Critical case alerts
+
+#### Assessment Tools
+- **BWAT Integration**
+  - 13 assessment criteria
+  - Automated scoring
+  - Severity classification
+  - Progress tracking
+
+- **MEASURE Tool**
+  - Step-by-step assessment
+  - Wound measurements
+  - Tissue composition analysis
+  - Treatment planning
+
+#### AI Analysis
+- Image analysis using computer vision
+- Risk assessment algorithms
+- Healing prediction models
+- Treatment recommendation engine
+- Progress trend analysis
+
+#### Photo Documentation
+- High-quality image capture
+- Multiple angle support
+- AI-powered analysis
+- Secure storage
+- Progress comparison
+
+## 🔧 Configuration
+
+### Android Configuration
+
+1. **Update Android Manifest**
+   ```xml
+   <uses-permission android:name="android.permission.CAMERA" />
+   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+   ```
+
+2. **Configure build.gradle**
+   ```gradle
+   android {
+       compileSdkVersion 33
+       defaultConfig {
+           minSdkVersion 21
+           targetSdkVersion 33
+       }
+   }
+   ```
+
+### AI Configuration
+
+1. **OpenAI Integration**
+   - Configure API key in environment
+   - Set up model parameters
+   - Configure analysis prompts
+
+2. **Image Analysis**
+   - Configure image processing
+   - Set up analysis parameters
+   - Configure storage settings
+
+## 📊 Data Management
+
+### Local Storage
+- SQLite database for patient data
+- Secure image storage
+- Assessment history
+- Progress tracking
+
+### Data Security
+- Encrypted storage
+- HIPAA compliance
+- Secure data transmission
+- Access control
+
+## 🎯 Best Practices
+
+### Clinical Guidelines
+- Follow evidence-based wound care protocols
+- Maintain accurate documentation
+- Regular assessment intervals
+- Proper infection control
+
+### Technical Standards
+- Clean code architecture
+- Comprehensive testing
+- Performance optimization
+- Security best practices
+
+## 🔍 Testing
+
+### Unit Tests
+```bash
+npm test
+```
+
+### Integration Tests
+```bash
+npm run test:integration
+```
+
+### E2E Tests
+```bash
+npm run test:e2e
+```
+
+## 📈 Performance
+
+### Optimization
+- Image compression and optimization
+- Lazy loading for large datasets
+- Efficient database queries
+- Memory management
+
+### Monitoring
+- Performance metrics
+- Error tracking
+- Usage analytics
+- User feedback
+
+## 🔒 Security
+
+### Data Protection
+- End-to-end encryption
+- Secure authentication
+- Data backup and recovery
+- Access logging
+
+### Compliance
+- HIPAA compliance
+- GDPR compliance
+- Local healthcare regulations
+- Privacy protection
+
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test thoroughly
+4. Add tests
 5. Submit a pull request
 
-## License
+## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Support
+## 🆘 Support
 
-For support and questions, please contact the development team or create an issue in the repository.
+### Documentation
+- [User Guide](docs/user-guide.md)
+- [API Documentation](docs/api.md)
+- [Development Guide](docs/development.md)
+
+### Contact
+- Email: support@woundcareapp.com
+- Issues: [GitHub Issues](https://github.com/your-username/wound-care-app/issues)
+
+## 🙏 Acknowledgments
+
+- Healthcare professionals for clinical guidance
+- Open source community for tools and libraries
+- Research institutions for evidence-based protocols
+- Users for feedback and testing
+
+## 📋 Changelog
+
+### Version 1.0.0
+- Initial release
+- AI-powered wound analysis
+- BWAT and MEASURE tools
+- Photo documentation
+- Patient management
+- Progress tracking
+
+---
+
+**Note**: This application is designed for healthcare professionals and should be used in accordance with clinical guidelines and local regulations.
