@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_patients"
+            android:icon="@drawable/ic_patients"
+            android:title="@string/nav_patients" />
+        
+        <item
+            android:id="@+id/nav_assessments"
+            android:icon="@drawable/ic_assessment"
+            android:title="@string/nav_assessments" />
+        
+        <item
+            android:id="@+id/nav_dashboard"
+            android:icon="@drawable/ic_dashboard"
+            android:title="@string/nav_dashboard" />
+        
+        <item
+            android:id="@+id/nav_reports"
+            android:icon="@drawable/ic_reports"
+            android:title="@string/nav_reports" />
+    </group>
+    
+    <item android:title="Other">
+        <menu>
+            <item
+                android:id="@+id/nav_settings"
+                android:icon="@drawable/ic_settings"
+                android:title="@string/nav_settings" />
+            
+            <item
+                android:id="@+id/nav_help"
+                android:icon="@drawable/ic_help"
+                android:title="@string/nav_help" />
+            
+            <item
+                android:id="@+id/nav_about"
+                android:icon="@drawable/ic_info"
+                android:title="@string/nav_about" />
+        </menu>
+    </item>
+    
+</menu>
